@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Notissimus_test.BLL;
 using Notissimus_test.DAL.Entities;
 using Notissimus_test.DAL.Interfaces;
 using System.Net;
@@ -12,26 +13,37 @@ namespace Notissimus_test.DAL
 	{
 		private Uri _url;
 		private Encoding _encoding;
-		public OfferWebProvider(Uri url, Encoding encoding) => (_url, _encoding) = (url, encoding);
-		public OfferWebProvider(Uri url) : this(url, Encoding.UTF8) { }
+		private ILogger<OfferWebProvider> _logger;
+		public OfferWebProvider(Uri url, Encoding encoding, ILogger<OfferWebProvider> logger) 
+			=> (_url, _encoding, _logger) = (url, encoding, logger);
+		public OfferWebProvider(Uri url, ILogger<OfferWebProvider> logger) : this(url, Encoding.UTF8, logger) { }
 
 		public OfferEntity Get(long id)
 		{
-			var client = new WebClient() { Encoding = _encoding };
-			var xmlStr = client.DownloadString(_url);
+			try
+			{
+				var client = new WebClient() { Encoding = _encoding };
+				var xmlStr = client.DownloadString(_url);
 
-			var xdoc = XDocument.Parse(xmlStr);
-			var stringId = id.ToString();
+				var xdoc = XDocument.Parse(xmlStr);
+				var stringId = id.ToString();
 
-			var result = xdoc.Descendants("offers")
-				.Elements()
-				.Single(offer => offer.Attribute("id").Value == stringId);
+				var result = xdoc.Descendants("offers")
+					.Elements()
+					.Single(offer => offer.Attribute("id").Value == stringId);
 
-			var type = GetOfferType(result);
-			var xs = new XmlSerializer(type);
+				var type = GetOfferType(result);
+				var xs = new XmlSerializer(type);
 
-			var offer = (OfferEntity)xs.Deserialize(new StringReader(result.ToString()));
-			return offer;
+				var offer = (OfferEntity)xs.Deserialize(new StringReader(result.ToString()));
+				return offer;
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Ошибка при загрузке оффера из сети");
+				return null;
+			}
+			
 		}
 		private Type GetOfferType(XElement element)
 		{

@@ -18,7 +18,7 @@ namespace Notissimus_test.BLL
 		{
 			try
 			{
-				Offer offer = new();
+				Offer offer;
 
 				var offerEntity = _repository.Get(id);
 				if (offerEntity == null)
@@ -41,6 +41,9 @@ namespace Notissimus_test.BLL
 						break;
 					case OfferEntity:
 						offer = _mapper.Map<Offer>(offerEntity);
+						break;
+					case null:
+						offer = null;
 						break;
 				}
 

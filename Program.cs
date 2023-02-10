@@ -22,7 +22,7 @@ var prov = System.Text.CodePagesEncodingProvider.Instance;
 var codePage = int.Parse(builder.Configuration["RemoteOfferStorage:Encoding"]);
 var enc = prov.GetEncoding(codePage);
 
-builder.Services.AddSingleton<IOfferWebProvider>(new OfferWebProvider(url, enc));
+builder.Services.AddSingleton<IOfferWebProvider>(serv => new OfferWebProvider(url, enc, (ILogger<OfferWebProvider>) serv.GetRequiredService(typeof(ILogger<OfferWebProvider>))));
 builder.Services.AddScoped<IOfferService, OfferService>();
 
 var mapperConfig = new MapperConfiguration(mc =>
